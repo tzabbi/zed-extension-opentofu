@@ -1,14 +1,15 @@
 id = "opentofu"
 name = "OpenTofu"
 description = "OpenTofu support."
-version = "0.2.0"
+version = "0.3.0"
 schema_version = 1
 authors = [
-    "Caius Durling <dev@caius.name>",
-    "Daniel Banck <dbanck@users.noreply.github.com>",
-    "Artem Zhurikhin <github.code@ash.pw>",
+  "Caius Durling <dev@caius.name>",
+  "Daniel Banck <dbanck@users.noreply.github.com>",
+  "Artem Zhurikhin <github.code@ash.pw>",
+  "Tom Zaspel <tom@zaspel.it>",
 ]
-repository = "https://github.com/ashpool37/zed-extension-opentofu"
+repository = "https://github.com/tzabbi/zed-extension-opentofu"
 
 [language_servers.tofu-ls]
 name = "OpenTofu Language Server"
