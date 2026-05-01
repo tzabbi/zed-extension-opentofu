@@ -21,4 +21,4 @@ code_action_kinds = []
 
 [grammars.hcl]
 repository = "https://github.com/MichaHoffmann/tree-sitter-hcl"
-commit = "e936d3fef8bac884661472dce71ad82284761eb1"
+commit = "64ad62785d442eb4d45df3a1764962dafd5bc98b"
