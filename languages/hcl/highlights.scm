@@ -1,5 +1,7 @@
-; https://github.com/nvim-treesitter/nvim-treesitter/blob/cb79d2446196d25607eb1d982c96939abdf67b8e/queries/hcl/highlights.scm
-; highlights.scm
+; highlights.scm — HCL base for Zed
+; Based on nvim-treesitter HCL highlights
+
+; ── Operators ──────────────────────────────────────────────
 [
   "!"
   "\*"
@@ -17,6 +19,7 @@
   "||"
 ] @operator
 
+; ── Brackets ──────────────────────────────────────────────
 [
   "{"
   "}"
@@ -26,6 +29,7 @@
   ")"
 ] @punctuation.bracket
 
+; ── Delimiters ────────────────────────────────────────────
 [
   "."
   ".*"
@@ -33,6 +37,7 @@
   "[*]"
 ] @punctuation.delimiter
 
+; ── Special punctuation ───────────────────────────────────
 [
   (ellipsis)
   "\?"
@@ -44,6 +49,7 @@
   "="
 ] @punctuation
 
+; ── Keywords ──────────────────────────────────────────────
 [
   "for"
   "endfor"
@@ -53,65 +59,73 @@
   "endif"
 ] @keyword
 
+; ── Strings ───────────────────────────────────────────────
 [
   (quoted_template_start) ; "
-  (quoted_template_end) ; "
-  (template_literal) ; non-interpolation/directive content
+  (quoted_template_end)   ; "
+  (template_literal)      ; non-interpolation/directive content
 ] @string
 
+; ── Heredoc ───────────────────────────────────────────────
 [
   (heredoc_identifier) ; END
-  (heredoc_start) ; << or <<-
+  (heredoc_start)      ; << or <<-
 ] @punctuation.delimiter
 
+; ── Template interpolation / directives ───────────────────
 [
   (template_interpolation_start) ; ${
-  (template_interpolation_end) ; }
-  (template_directive_start) ; %{
-  (template_directive_end) ; }
-  (strip_marker) ; ~
+  (template_interpolation_end)   ; }
+  (template_directive_start)     ; %{
+  (template_directive_end)       ; }
+  (strip_marker)                 ; ~
 ] @punctuation.special
 
+; ── Literals ──────────────────────────────────────────────
 (numeric_lit) @number
-
 (bool_lit) @boolean
-
 (null_lit) @constant
 
+; ── Comments ──────────────────────────────────────────────
 (comment) @comment
 
+; ── Default: all identifiers are variables ────────────────
 (identifier) @variable
 
+; ── Top-level block type keywords ─────────────────────────
 (body
   (block
     (identifier) @keyword))
 
+; ── Nested block labels ───────────────────────────────────
 (body
   (block
     (body
       (block
         (identifier) @type))))
 
+; ── Function calls ────────────────────────────────────────
 (function_call
   (identifier) @function)
 
+; ── Attribute definitions (left side of =) ────────────────
 (attribute
-  (identifier) @variable)
+  (identifier) @property)
 
-; { key: val }
-;
-; highlight identifier keys as though they were block attributes
+; ── Object keys ───────────────────────────────────────────
 (object_elem
   key:
     (expression
       (variable_expr
-        (identifier) @variable)))
+        (identifier) @property)))
 
-; var.foo, data.bar
-;
-; first element in get_attr is a variable.builtin or a reference to a variable.builtin
+; ── Property access (get_attr) ────────────────────────────
 (expression
   (variable_expr
     (identifier) @variable)
   (get_attr
-    (identifier) @variable))
+    (identifier) @property))
+
+; ── For-loop iteration variables ──────────────────────────
+(for_intro
+  (identifier) @variable.parameter)

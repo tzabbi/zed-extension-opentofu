@@ -1,5 +1,8 @@
-; https://github.com/nvim-treesitter/nvim-treesitter/blob/cb79d2446196d25607eb1d982c96939abdf67b8e/queries/hcl/highlights.scm
-; highlights.scm
+; highlights.scm — OpenTofu for Zed
+; Based on nvim-treesitter queries for HCL and Terraform,
+; adapted and extended for OpenTofu and Zed's capture names.
+
+; ── Operators ──────────────────────────────────────────────
 [
   "!"
   "\*"
@@ -17,6 +20,7 @@
   "||"
 ] @operator
 
+; ── Brackets ──────────────────────────────────────────────
 [
   "{"
   "}"
@@ -26,6 +30,7 @@
   ")"
 ] @punctuation.bracket
 
+; ── Delimiters ────────────────────────────────────────────
 [
   "."
   ".*"
@@ -33,6 +38,7 @@
   "[*]"
 ] @punctuation.delimiter
 
+; ── Special punctuation ───────────────────────────────────
 [
   (ellipsis)
   "\?"
@@ -44,6 +50,7 @@
   "="
 ] @punctuation
 
+; ── Keywords ──────────────────────────────────────────────
 [
   "for"
   "endfor"
@@ -53,101 +60,134 @@
   "endif"
 ] @keyword
 
+; ── Strings ───────────────────────────────────────────────
 [
   (quoted_template_start) ; "
-  (quoted_template_end) ; "
-  (template_literal) ; non-interpolation/directive content
+  (quoted_template_end)   ; "
+  (template_literal)      ; non-interpolation/directive content
 ] @string
 
+; ── Heredoc ───────────────────────────────────────────────
 [
   (heredoc_identifier) ; END
-  (heredoc_start) ; << or <<-
+  (heredoc_start)      ; << or <<-
 ] @punctuation.delimiter
 
+; ── Template interpolation / directives ───────────────────
 [
   (template_interpolation_start) ; ${
-  (template_interpolation_end) ; }
-  (template_directive_start) ; %{
-  (template_directive_end) ; }
-  (strip_marker) ; ~
+  (template_interpolation_end)   ; }
+  (template_directive_start)     ; %{
+  (template_directive_end)       ; }
+  (strip_marker)                 ; ~
 ] @punctuation.special
 
+; ── Literals ──────────────────────────────────────────────
 (numeric_lit) @number
-
 (bool_lit) @boolean
-
 (null_lit) @constant
 
+; ── Comments ──────────────────────────────────────────────
 (comment) @comment
 
+; ── Default: all identifiers are variables ────────────────
 (identifier) @variable
 
+; ── Top-level block type keywords (resource, data, …) ────
 (body
   (block
     (identifier) @keyword))
 
+; ── Nested block labels (e.g. provisioner, lifecycle, …) ─
 (body
   (block
     (body
       (block
         (identifier) @type))))
 
+; ── Function calls ────────────────────────────────────────
 (function_call
   (identifier) @function)
 
+; ── Attribute definitions (left side of =) ────────────────
 (attribute
-  (identifier) @variable)
+  (identifier) @property)
 
-; { key: val }
-;
-; highlight identifier keys as though they were block attributes
+; ── Object keys ───────────────────────────────────────────
+; { key: val } — highlight identifier keys as properties
 (object_elem
   key:
     (expression
       (variable_expr
-        (identifier) @variable)))
+        (identifier) @property)))
 
-; var.foo, data.bar
-;
-; first element in get_attr is a variable.builtin or a reference to a variable.builtin
+; ── Property access (get_attr) ────────────────────────────
+; var.foo, data.bar, each.value, manifest.kind, etc.
+; The property part (after the dot) is highlighted as @property
 (expression
   (variable_expr
     (identifier) @variable)
   (get_attr
-    (identifier) @variable))
+    (identifier) @property))
 
-; https://github.com/nvim-treesitter/nvim-treesitter/blob/cb79d2446196d25607eb1d982c96939abdf67b8e/queries/terraform/highlights.scm
-; Terraform specific references
-;
-;
-; local/module/data/var/output
+; ── For-loop iteration variables ──────────────────────────
+; for <var> in ... :
+; for <key>, <value> in ... :
+(for_intro
+  (identifier) @variable.parameter)
+
+; ── Built-in reference variables ──────────────────────────
+; each.value, each.key
 (expression
   (variable_expr
-    (identifier) @variable
-    (#any-of? @variable "data" "var" "local" "module" "output"))
+    (identifier) @variable.builtin
+    (#any-of? @variable.builtin "each" "self" "count"))
   (get_attr
-    (identifier) @variable))
+    (identifier) @property))
 
-; path.root/cwd/module
+; each / self / count standalone (without get_attr)
+((variable_expr
+    (identifier) @variable.builtin
+    (#any-of? @variable.builtin "each" "self" "count")))
+
+; ── OpenTofu / Terraform well-known references ────────────
+; local/module/data/var/output — the prefix is a builtin
+(expression
+  (variable_expr
+    (identifier) @variable.builtin
+    (#any-of? @variable.builtin "data" "var" "local" "module" "output"))
+  (get_attr
+    (identifier) @property))
+
+; ── path.root / path.cwd / path.module ────────────────────
 (expression
   (variable_expr
     (identifier) @type
     (#eq? @type "path"))
   (get_attr
-    (identifier) @variable
-    (#any-of? @variable "root" "cwd" "module")))
+    (identifier) @variable.builtin
+    (#any-of? @variable.builtin "root" "cwd" "module")))
 
-; terraform.workspace
+; ── opentofu.workspace ────────────────────────────────────
+(expression
+  (variable_expr
+    (identifier) @type
+    (#eq? @type "opentofu"))
+  (get_attr
+    (identifier) @variable.builtin
+    (#any-of? @variable.builtin "workspace")))
+
+; ── terraform.workspace (backwards compat) ────────────────
 (expression
   (variable_expr
     (identifier) @type
     (#eq? @type "terraform"))
   (get_attr
-    (identifier) @variable
-    (#any-of? @variable "workspace")))
+    (identifier) @variable.builtin
+    (#any-of? @variable.builtin "workspace")))
 
-; Terraform specific keywords
-; TODO: ideally only for identifiers under a `variable` block to minimize false positives
+; ── Type keywords ─────────────────────────────────────────
+; TODO: ideally only for identifiers under a `variable` block
 ((identifier) @type
   (#any-of? @type "bool" "string" "number" "object" "tuple" "list" "map" "set" "any"))
 
