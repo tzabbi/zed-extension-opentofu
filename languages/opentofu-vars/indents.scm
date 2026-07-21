@@ -4,6 +4,8 @@
   (object)
   (tuple)
   (function_call)
+  (for_object_expr)
+  (for_tuple_expr)
 ] @indent
 
 [
